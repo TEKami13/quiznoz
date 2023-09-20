@@ -27,7 +27,7 @@ export function Question({question, onClickAnswer}) {
             <h2>Can you answer this?</h2>
             <p>{question.question}</p>
             {Object.keys(question.answers)
-                .filter((k) => question.answers[k])
+                .filter((k ) => question.answers[k])
                 .map((k) => (
                     <QuestionAnswerButton
                         key={k}
@@ -79,7 +79,8 @@ function Quiz() {
 
     async function fetchRandomQuestion() {
         const res = await fetch("/api/questions/random");
-        setQuestion(await res.json());
+        const response = await res.json();
+        setQuestion(await response);
     }
 
     useEffect(() => {
@@ -88,8 +89,8 @@ function Quiz() {
 
     const navigateFn = useNavigate();
 
-    async function handleClickAnswer(answer) {
-        const res = await fetch("/api/question/answer", {
+    async function handleClickAnswer(id, answer) {
+        const res = await fetch("/api/questions/answer", {
             method: "POST",
             body: JSON.stringify({id, answer}),
             headers: {
@@ -136,6 +137,7 @@ export function QuizApplication() {
             </header>
             <nav>
                 <Link to={"/"}>Front page</Link>
+                <p></p>
                 <Link to={"/score"}>See my score</Link>
             </nav>
             <main>

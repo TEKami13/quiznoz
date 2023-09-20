@@ -1,5 +1,5 @@
 import renderer from "react-test-renderer";
-import { Question } from "../quizApplication"
+import {Question} from "../quizApplication"
 
 const question = {
     id: 123,

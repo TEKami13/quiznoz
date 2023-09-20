@@ -8,13 +8,14 @@ app.use(bodyParser.json());
 app.use(cookieParse("random-noise-to-sign-cookies"));
 app.use(express.static("../client/dist"));
 
-app.get("/api/question/random", (req, res) => {
+app.get("/api/questions/random", (req, res) => {
     const {id, question, answers} = randomQuestion();
     res.json(randomQuestion()).send()
 })
 
 app.post("/api/questions/answer", (req, res) => {
     const {id, answer} = req.body;
+    console.log(req.body);
     const question = Questions.find(q => q.id === id);
     const correct = isCorrectAnswer(question, answer);
 
@@ -25,11 +26,11 @@ app.post("/api/questions/answer", (req, res) => {
     const {answers, correctAnswers} = score;
     const newScore = {
         answers: answers+1,
-        correctAnswers: correctAnswers + (corrext ? 1 : 0)
+        correctAnswers: correctAnswers + (correct ? 1 : 0)
     }
     console.log(req.signedCookies, {score, newScore});
     res
-        .cookies("quizScore", JSON.stringify(newScore), {signed: true})
+        .cookie("quizScore", JSON.stringify(newScore), {signed: true})
         .json({correct})
 })
 
