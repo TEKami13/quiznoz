@@ -5,7 +5,8 @@
   "scripts": {
     "test": "jest",
     "dev": "parcel watch index.html",
-    "test:watch": "jest --watchAll"
+    "test:watch": "jest --watchAll",
+    "build": "parcel build index.html"
   },
   "keywords": [],
   "author": "",
