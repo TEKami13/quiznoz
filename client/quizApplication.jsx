@@ -1,148 +1,150 @@
-import {HashRouter, Link, Route, Routes, useNavigate} from "react-router-dom";
-import React, {useEffect, useState} from "react";
+import { HashRouter, Link, Route, Routes, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 
 function FrontPage() {
-    return (
-        <>
-            <h2>Welcome</h2>
-            <Link to={"/question"}>Ask a question</Link>
-        </>
-    );
+  return (
+    <>
+      <h2>Welcome</h2>
+      <Link to={"/question"}>Ask a question</Link>
+    </>
+  );
 }
 
-function QuestionAnswerButton({answer, onClick}) {
-    return (
-        <div>
-            <button onClick={onClick}>{answer}</button>
-        </div>
-    );
+function QuestionAnswerButton({ answer, onClick }) {
+  return (
+    <div>
+      <button onClick={onClick}>{answer}</button>
+    </div>
+  );
 }
 
-export function Question({question, onClickAnswer}) {
-    if (!question) {
-        return <div>Loading...</div>
-    }
-    return (
-        <>
-            <h2>Can you answer this?</h2>
-            <p>{question.question}</p>
-            {Object.keys(question.answers)
-                .filter((k ) => question.answers[k])
-                .map((k) => (
-                    <QuestionAnswerButton
-                        key={k}
-                        answer={question.answers[k]}
-                        onClick={() => onClickAnswer(question.id, k)}
-                    />
-                ))}
-        </>
-    );
+export function Question({ question, onClickAnswer }) {
+  if (!question) {
+    return <div>Loading...</div>;
+  }
+  return (
+    <>
+      <h2>Can you answer this?</h2>
+      <p>{question.question}</p>
+      {Object.keys(question.answers)
+        .filter((k) => question.answers[k])
+        .map((k) => (
+          <QuestionAnswerButton
+            key={k}
+            answer={question.answers[k]}
+            onClick={() => onClickAnswer(question.id, k)}
+          />
+        ))}
+    </>
+  );
 }
 
-function ShowAnswer({onAskAnother}) {
-    return (
-        <>
-            <Routes>
-                <Route path={"/correct"} element={<h2>That's correct!</h2>} />
-                <Route path={"/wrong"} element={<h2>That's wrong!</h2>} />
-            </Routes>
-            <div>
-                <button onClick={onAskAnother}>Ask me another question</button>
-            </div>
-        </>
-    );
+function ShowAnswer({ onAskAnother }) {
+  return (
+    <>
+      <Routes>
+        <Route path={"/correct"} element={<h2>That's correct!</h2>} />
+        <Route path={"/wrong"} element={<h2>That's wrong!</h2>} />
+      </Routes>
+      <div>
+        <button onClick={onAskAnother}>Ask me another question</button>
+      </div>
+    </>
+  );
 }
 
 function ShowScore() {
-    const [score, setScore] = useState(undefined);
-    async function fetchScore() {
-        const res = await fetch("/api/score");
-        setScore(await res.json());
-    }
-    useEffect(() => {
-        fetchScore();
-    }, [])
+  const [score, setScore] = useState(undefined);
+  async function fetchScore() {
+    const res = await fetch("/api/score");
+    setScore(await res.json());
+  }
+  useEffect(() => {
+    fetchScore();
+  }, []);
 
-    if (!score) {
-        return <div>Loading...</div>;
-    }
+  if (!score) {
+    return <div>Loading...</div>;
+  }
 
-    return (
-        <>
-            <h2>Your have {score.correctAnswers} out of {score.answers} correct answers</h2>
-        </>
-    )
+  return (
+    <>
+      <h2>
+        Your have {score.correctAnswers} out of {score.answers} correct answers
+      </h2>
+    </>
+  );
 }
 
 function Quiz() {
-    const [question, setQuestion] = useState();
+  const [question, setQuestion] = useState();
 
-    async function fetchRandomQuestion() {
-        const res = await fetch("/api/questions/random");
-        const response = await res.json();
-        setQuestion(await response);
+  async function fetchRandomQuestion() {
+    const res = await fetch("/api/questions/random");
+    const response = await res.json();
+    setQuestion(await response);
+  }
+
+  useEffect(() => {
+    fetchRandomQuestion();
+  }, []);
+
+  const navigateFn = useNavigate();
+
+  async function handleClickAnswer(id, answer) {
+    const res = await fetch("/api/questions/answer", {
+      method: "POST",
+      body: JSON.stringify({ id, answer }),
+      headers: {
+        "content-type": "application/json",
+      },
+    });
+    const response = await res.json();
+    if (response.correct) {
+      navigateFn("/answer/correct");
+    } else {
+      navigateFn("/answer/wrong");
     }
+  }
 
-    useEffect(() => {
-        fetchRandomQuestion();
-    }, [])
+  async function handleAskAnother() {
+    await fetchRandomQuestion();
+    navigateFn("/question");
+  }
 
-    const navigateFn = useNavigate();
-
-    async function handleClickAnswer(id, answer) {
-        const res = await fetch("/api/questions/answer", {
-            method: "POST",
-            body: JSON.stringify({id, answer}),
-            headers: {
-                "content-type": "application/json"
-            }
-        });
-        const response = await res.json();
-        if (response.correct) {
-            navigateFn("/answer/correct");
-        } else {
-            navigateFn("/answer/wrong");
+  return (
+    <Routes>
+      <Route path={"/"} element={<FrontPage />} />
+      <Route
+        path={"/answer/*"}
+        element={<ShowAnswer onAskAnother={handleAskAnother} />}
+      />
+      <Route
+        path={"/question"}
+        element={
+          <Question question={question} onClickAnswer={handleClickAnswer} />
         }
-    }
-
-    async function handleAskAnother() {
-        await fetchRandomQuestion();
-        navigateFn("/question");
-    }
-
-    return (
-        <Routes>
-            <Route path={"/"} element={<FrontPage />} />
-            <Route
-                path={"/answer/*"}
-                element={<ShowAnswer onAskAnother={handleAskAnother}/>}
-            />
-            <Route
-                path={"/question"}
-                element={
-                    <Question question={question} onClickAnswer={handleClickAnswer} />
-                }
-            />
-            <Route path={"/score"} element={<ShowScore />} />
-            <Route path={"*"} element={<h2>Not Found</h2>} />
-        </Routes>
-    );
+      />
+      <Route path={"/score"} element={<ShowScore />} />
+      <Route path={"*"} element={<h2>Not Found</h2>} />
+    </Routes>
+  );
 }
 
 export function QuizApplication() {
-    return (
-        <HashRouter>
-            <header>
-                <h1>React quiz app with express backend</h1>
-            </header>
-            <nav>
-                <Link to={"/"}>Front page</Link>
-                <p></p>
-                <Link to={"/score"}>See my score</Link>
-            </nav>
-            <main>
-                <Quiz />
-            </main>
-        </HashRouter>
-    );
+  return (
+    <HashRouter>
+      <header>
+        <h1>React quiz app with express backend</h1>
+      </header>
+      <nav>
+        <Link to={"/"}>Front page</Link>
+        <p></p>
+        <Link to={"/score"}>See my score</Link>
+      </nav>
+      <main>
+        <Quiz />
+      </main>
+    </HashRouter>
+  );
 }
